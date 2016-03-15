@@ -7,28 +7,29 @@ namespace e
 	public:
 		CFaceTracker(void);
 		virtual ~CFaceTracker(void);
-		void SetMinFaceSize(int nWidth, int nHeight);
-		void SetMaxFaceSize(int nWidth, int nHeight);
 		void OnSampleProc(void* pData, int nSize, int nWidth, int nHeight, int nBitCount);
 	protected:
 		void SetupCvMat(void* pData, int nSize, int nWidth, int nHeight, int nBitCount);
+		void SetupCvMat(cv::Rect roi, void* pData, int nSize, int nWidth, int nHeight, int nBitCount);
 		void DrawRect(int x
 			, int y
 			, int w
 			, int h
+			, int nPenSize
+			, int nColor
 			, void* pData
 			, int nSize
 			, int nWidth
 			, int nHeight
 			, int nBitCount);
-		void Reset(void);
+		void DrawRect(cv::Rect rect, int nPenSize, int nColor, void* pData, int nSize, int nWidth, int nHeight, int nBitCount);
 	protected:
-		cv::Mat* m_pMat;
+		CvMat*  m_pSrcMat;
+		cv::Mat m_dstMat;
 		cv::CascadeClassifier* m_pFaceCascade;
-		cv::Size m_faceSize;
-		cv::Size m_minFaceSize;
-		cv::Size m_maxFaceSize;
-		cv::Size m_faceSizeOffset;
+		cv::Rect m_faceRect;
+		cv::Rect m_prevRect;
 		bool m_bFaceLocated;
+		DWORD m_dwLastTime;
 	};
 }

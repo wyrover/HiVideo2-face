@@ -11,6 +11,7 @@
 //#include <windows.h>
 #include <strmif.h>
 #include <uuids.h>
+#include "resource.h"
 
 // TODO:  在此处引用程序需要的其他头文件
 #include "libutils.h"

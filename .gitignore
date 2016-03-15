@@ -2,6 +2,8 @@
 /bin/*.exe
 /bin/*.ilk
 /bin/*.pdb
+/bin/*.iobj
+/bin/*.ipdb
 /bin/libdui.dll
 /bin/libduid.dll
 /bin/opencv_*.dll
@@ -17,8 +19,10 @@
 /lib/libcamera.lib
 /lib/libface.lib
 /lib/libfaced.lib
+/ipch
 *.suo
 *.sdf
 *.opensdf
-/ipch
+*.aps
 *.VC.opendb
+*.VC.db

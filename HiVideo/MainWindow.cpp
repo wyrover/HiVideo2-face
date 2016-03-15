@@ -126,7 +126,7 @@ namespace e
 		m_pm.Init(m_hWnd);
 		CDialogBuilder builder;
 		CHiCameraBuilderCallback callback;
-		CControlUI* pRoot = builder.Create(_T("MainFrame.xml"), (UINT)0, &callback, &m_pm);
+		CControlUI* pRoot = builder.Create(_T("UI.xml"), (UINT)0, &callback, &m_pm);
 		ASSERT(pRoot && "Failed to parse XML");
 		m_pm.AttachDialog(pRoot);
 		m_pm.AddNotifier(this);

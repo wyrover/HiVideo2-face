@@ -12,6 +12,7 @@ int WINAPI _tWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	CMainWindow* pMainFrame = new CMainWindow();
 	if (pMainFrame == NULL) return 0;
 	pMainFrame->Create(NULL, NULL, UI_WNDSTYLE_DIALOG, 0);
+	pMainFrame->SetIcon(IDI_ICON1);
 	pMainFrame->CenterWindow();
 	pMainFrame->ShowWindow(true);
 	CPaintManagerUI::MessageLoop();
