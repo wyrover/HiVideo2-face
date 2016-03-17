@@ -10,7 +10,8 @@ namespace e
 		m_pBuffer = NULL;
 		::InitializeCriticalSection(&m_csLock);
 
-		Open(pFileName);
+		bool ok = Open(pFileName);
+		assert(ok);
 	}
 
 	CLogger::~CLogger(void)
@@ -137,8 +138,25 @@ namespace e
 		va_start(ap, pFormat);
 		int nSize = _vsctprintf(pFormat, ap) + sizeof(TCHAR) * 256;
 		TCHAR* pBuffer = new TCHAR[nSize];
+		memset(pBuffer, 0, nSize);
 		_vstprintf_s(pBuffer, nSize, pFormat, ap);
 		_tcscat_s(pBuffer, nSize, _T("\n"));
+		va_end(ap);
+		OutputDebugString(pBuffer);
+		delete[] pBuffer;
+	}
+
+	void Log(const TCHAR* pPrefix, const TCHAR* pFormat, ...)
+	{
+		va_list ap;
+		va_start(ap, pFormat);
+		int nPrefixSize = _tcslen(pPrefix);
+		int nTotalSize = _vsctprintf(pFormat, ap) + nPrefixSize + 32;
+		TCHAR* pBuffer = new TCHAR[nTotalSize];	
+		memset(pBuffer, 0, nTotalSize * sizeof(TCHAR));
+		_tcscpy_s(pBuffer, nTotalSize, pPrefix);
+		_vstprintf_s(pBuffer + nPrefixSize, (nTotalSize - nPrefixSize), pFormat, ap);
+		_tcscat_s(pBuffer, nTotalSize, _T("\n"));
 		va_end(ap);
 		OutputDebugString(pBuffer);
 		delete[] pBuffer;

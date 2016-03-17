@@ -42,6 +42,7 @@ namespace e
 		void OnVideoStart(void);
 		void OnVideoStop(void);
 		void OnVideoDetect(void);
+		void OnVideoSave(void);
 		//face track proc
 		void OnFaceTrack(void* pData, int nSize, int nWidth, int nHeight, int nBitCount);
 	protected:
@@ -57,6 +58,7 @@ namespace e
 		CFaceTracker* m_pFaceTracker;
 
 		BOOL m_bFaceTrack;
+		BOOL m_bVideoSave;
 		DWORD m_dwState;
 		DWORD m_dwStartTime;
 	};

@@ -25,5 +25,11 @@ namespace e
 	};
 
 	void Log(const TCHAR* pFormat, ...);
+	void Log(const TCHAR* pPrefix, const TCHAR* pFormat, ...);
+
+#define LOGI(...) Log(_T("info: "), __VA_ARGS__)
+#define LOGE(...) Log(_T("error: "),  __VA_ARGS__)
+#define LOGD(...) Log(_T("debug: "), __VA_ARGS__)
+#define LOGW(...) Log(_T("warnning: "), __VA_ARGS__)
 }
 

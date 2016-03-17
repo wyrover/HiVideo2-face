@@ -3,9 +3,11 @@
 	<Container>
 		<!--Mainframe-->
 		<VerticalLayout name="home_pane" inset="2,0,2,2" bkcolor="#FF60B1FE" bordercolor="#FF1B4876" bordersize="1">
-			<HorizontalLayout name="home_title" height="50" bkcolor="#F5F5F5F5">
-				<Label text="HiCamera" width="60" height="50" bkcolor="#FF00FF00" bkimage="camera.png"/>
+			<HorizontalLayout name="home_title" height="30" bkcolor="#F5F5F5F5">
+				<!--
+				<Label text="HiCamera" width="60" height="50" bkcolor="#FF00FF00"/>				
 				<Button name="btn_file_open" float="true" pos="62,2,110,50" tooltip="打开文件" normalimage="file_open.png" hotimage="file_open.png" pushedimage="file_open.pgn"/>
+				-->
 				<Control />
 				<Button name="btn_minbox" width="26" maxheight="18" tooltip="点击这里最小化" normalimage="file='minimize_normal.png' mask='#FFFF00FF'" hotimage="file='minimize_hot.png' mask='#FFFF00FF'" pushedimage="file='minimize_pushed.png' mask='#FFFF00FF'"/>
 				<Button name="btn_maxbox" width="26" maxheight="18" tooltip="点击这里最大化" normalimage="file='maximize_normal.png' mask='#FFFF00FF'" hotimage="file='maximize_hot.png' mask='#FFFF00FF'" pushedimage="file='maximize_pushed.png' mask='#FFFF00FF'"/>
@@ -21,7 +23,8 @@
 				<VerticalLayout name="right_toolbar" width="60" bkcolor="#FFFFFF00" bordercolor="#FF1B4876" bordersize="1">
 					<Button name="btn_video_start" float="true" pos="7,4,55,52" tooltip="启动摄像头" normalimage="video_start.png" hotimage="video_start.png" pushedimage="video_start.pgn"/>
 					<Button name="btn_video_stop"  float="true" pos="7,62,55,110" tooltip="关闭摄像头" normalimage="video_stop.png" hotimage="video_stop.png" pushedimage="video_stop.pgn"/>
-					<Button name="btn_video_detect" float="true" pos="7,120,54,168" tooltip="人脸检测" normalimage="face_detect.png" hotimage="face_detect.png" pushedimage="face_detect.pgn"/>
+					<Button name="btn_video_detect" float="true" pos="7,120,54,168" tooltip="人脸检测" normalimage="video_detect.png" hotimage="video_detect.png" pushedimage="video_detect.pgn"/>
+					<Button name="btn_video_save" float="true" pos="7,178,54,226" tooltip="保存图片" normalimage="video_save.png" hotimage="video_save.png" pushedimage="video_save.pgn"/>
 				</VerticalLayout>
 			</HorizontalLayout>
 		</VerticalLayout>

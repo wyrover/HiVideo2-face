@@ -26,6 +26,7 @@ namespace e
 	CMainWindow::CMainWindow(void)
 		: m_pVideoDevice(NULL)
 		, m_bFaceTrack(FALSE)
+		, m_bVideoSave(FALSE)
 	{
 		HRESULT hr;
 		m_pVideoDevice = new CVideoDevice(&hr);
@@ -44,6 +45,8 @@ namespace e
 	void CMainWindow::Init(void)
 	{
 		InitDevice();
+		OnVideoStart();
+		OnVideoDetect();
 	}
 
 	LRESULT CMainWindow::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -195,6 +198,8 @@ namespace e
 				OnVideoStop();
 			}else if (msg.pSender->GetName() == _T("btn_video_detect")){
 				OnVideoDetect();
+			}else if (msg.pSender->GetName() == _T("btn_video_save")){
+				OnVideoSave();
 			}
 		}
 		else if (msg.sType == _T("itemselect"))
@@ -272,6 +277,12 @@ namespace e
 
 		pRefVideo->DoRenderSample(pData, nWidth, nHeight, nBitCount);
 
+		if (m_bVideoSave)
+		{
+			e::CBitmap::Save(_T("f:\\temp\\raw.bmp"), nWidth, nHeight, nBitCount, pData);
+			m_bVideoSave = FALSE;
+		}
+
 		if (m_bFaceTrack)
 		{
 			OnFaceTrack(pData, nSize, nWidth, nHeight, nBitCount);			
@@ -279,8 +290,7 @@ namespace e
 		}
 		else
 		{
-			DWORD dwGreenColor = 0xff00ff00;
-			pMixVideo->DoRenderSample(dwGreenColor);
+			pMixVideo->DoRenderSample(0xff00ff00);
 		}
 	}
 
@@ -310,6 +320,11 @@ namespace e
 	void CMainWindow::OnVideoDetect(void)
 	{
 		m_bFaceTrack = !m_bFaceTrack;
+	}
+
+	void CMainWindow::OnVideoSave(void)
+	{
+		m_bVideoSave = TRUE;
 	}
 
 	void CMainWindow::OnFaceTrack(void* pData, int nSize, int nWidth, int nHeight, int nBitCount)

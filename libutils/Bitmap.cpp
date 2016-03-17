@@ -106,13 +106,14 @@ namespace e
 			BOOL bRet = Create(nWidth, nHeight, nBitCount, pBits);
 			assert(bRet);
 		}
-		else if (pBits)
+		else if (pBits)// only adapter bitmap
 		{
 			m_pBits = (BYTE*)pBits;
 			m_nWidth = nWidth;
 			m_nHeight = nHeight;
 			m_nBitCount = nBitCount;
 			m_nLineSize = WidthBytes(nWidth*nBitCount);
+			m_bAllocMem = bAlloc;
 		}
 	}
 
@@ -124,6 +125,7 @@ namespace e
 		m_nHeight = 0;
 		m_nBitCount = 0;
 		m_nLineSize = 0;
+		m_bAllocMem = true;
 	}
 
 	CBitmap::~CBitmap(void)
@@ -199,6 +201,7 @@ namespace e
 		int nNewSize = WidthBytes(nWidth * nBitCount) * nHeight;
 		if (nNewSize != m_nSize)
 		{
+			assert(m_bAllocMem);
 			m_pBits = (BYTE*)realloc(m_pBits, nNewSize);
 			if (m_pBits == NULL) return FALSE;
 			m_nSize = nNewSize;
@@ -426,7 +429,10 @@ _error:
 	}
 
 	void CBitmap::Destroy(void)
-	{
-		SafeFree(&m_pBits);
+	{	
+		if (m_bAllocMem)
+		{
+			SafeFree(&m_pBits);
+		}
 	}
 }

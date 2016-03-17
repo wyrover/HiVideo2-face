@@ -68,5 +68,6 @@ namespace e
 		int m_nHeight;
 		int m_nBitCount;
 		int m_nLineSize;
+		bool m_bAllocMem;
 	};
 }

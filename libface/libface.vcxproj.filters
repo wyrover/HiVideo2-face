@@ -30,12 +30,39 @@
     <ClInclude Include="FaceTracker.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="misc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Region.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="flandmark_detector.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="liblbp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="msvc-compat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="FaceTracker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="misc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Region.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="flandmark_detector.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="liblbp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
