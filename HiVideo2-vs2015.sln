@@ -22,8 +22,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcamera", "libcamera\libc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libface", "libface\libface.vcxproj", "{A69E7A2C-9519-4830-8B1A-E9511842A098}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestCapture", "TestCapture\TestCapture.vcxproj", "{A437B01B-D7DF-4628-B117-069D97513E6A}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -70,14 +68,6 @@ Global
 		{A69E7A2C-9519-4830-8B1A-E9511842A098}.Release|Win32.Build.0 = Release|Win32
 		{A69E7A2C-9519-4830-8B1A-E9511842A098}.Release|x64.ActiveCfg = Release|x64
 		{A69E7A2C-9519-4830-8B1A-E9511842A098}.Release|x64.Build.0 = Release|x64
-		{A437B01B-D7DF-4628-B117-069D97513E6A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{A437B01B-D7DF-4628-B117-069D97513E6A}.Debug|Win32.Build.0 = Debug|Win32
-		{A437B01B-D7DF-4628-B117-069D97513E6A}.Debug|x64.ActiveCfg = Debug|x64
-		{A437B01B-D7DF-4628-B117-069D97513E6A}.Debug|x64.Build.0 = Debug|x64
-		{A437B01B-D7DF-4628-B117-069D97513E6A}.Release|Win32.ActiveCfg = Release|Win32
-		{A437B01B-D7DF-4628-B117-069D97513E6A}.Release|Win32.Build.0 = Release|Win32
-		{A437B01B-D7DF-4628-B117-069D97513E6A}.Release|x64.ActiveCfg = Release|x64
-		{A437B01B-D7DF-4628-B117-069D97513E6A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
