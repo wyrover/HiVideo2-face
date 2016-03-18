@@ -251,7 +251,7 @@ _again:
 				static int nFailedTimes = 0;
 				LOGD(_T("face track failed: %d"), nFailedTimes++);
 				cv::imwrite("f:\\temp\\loss.bmp", m_dstMat);
-				if (++nRetryTimes < kMaxRetryTimes) goto _again;
+				if (++nRetryTimes < kMaxRetryTimes) goto _again;           
 			}
 		}
 	}
