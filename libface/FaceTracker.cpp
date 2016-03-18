@@ -4,18 +4,19 @@
 
 namespace e
 {
-	const int kMaxRetryTimes = 2;
-	const int kHaarFaceOptions = CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_DO_ROUGH_SEARCH;
-	const int kHaarEyesOptions = CV_HAAR_SCALE_IMAGE;
-	//const char* kFaceCascade = "D:\\ThirdParty\\opencv-3.1\\etc\\lbpcascades\\lbpcascade_frontalface.xml";
+	const int kHaarOptions = CV_HAAR_FIND_BIGGEST_OBJECT | CV_HAAR_DO_ROUGH_SEARCH;
 	const char* kFaceCascade = "D:\\ThirdParty\\opencv-3.1\\etc\\haarcascades\\haarcascade_frontalface_alt2.xml";
-	const char* kEyesCascade = "D:\\ThirdParty\\opencv-3.1\\etc\\haarcascades\\haarcascade_eye_tree_eyeglasses.xml";
 
-	const float kDefaultScale = 0.25f;
-	const cv::Size kDefaultMinFaceSize(10, 10);
-	const cv::Size kDefaultMaxFaceSize(60, 60);
+	const int kMaxRetryTimes = 2;
+	const float kScaleDefault = 0.25f;
+	const float kInvScaleDefault = 1 / kScaleDefault;
+	const float kWidenDefault = kScaleDefault * 0.15f;
+	const float kScaleFactorDefault = 1.1f;
+	const cv::Size kMinSizeDefault(15, 15);
+	const cv::Size kMaxSizeDefault(60, 60);
 
-	template<class T> void limit(T & t, T a, T b)
+	template<class T> 
+	void limit(T & t, T a, T b)
 	{
 		if (t < a)
 			t = a;
@@ -23,20 +24,47 @@ namespace e
 			t = b;
 	}
 
-	void limit(cv::Rect & rect, int w, int h)
+	inline int round(float x)
 	{
-		limit(rect.x, 0, w - 1);
-		limit(rect.y, 0, h - 1);
+		return (int)(x < 0 ? x - 0.5f : x + 0.5f);
+	}
+
+	inline void CheckRect(cv::Rect & rect, int w, int h)
+	{
+		limit(rect.x, 0, w-1);
+		limit(rect.y, 0, h-1);
 		limit(rect.width, 0, w - rect.x);
 		limit(rect.height, 0, h - rect.y);
 	}
 
+	inline void ResizeRect(cv::Rect & rect, float scale)
+	{
+		rect.x = round(rect.x * scale);
+		rect.y = round(rect.y * scale);
+		rect.width = round(rect.width * scale);
+		rect.height = round(rect.height * scale);
+	}
+
+	inline void WidenRect(cv::Rect & rect, int dx, int dy)
+	{
+		rect.x -= dx; 
+		rect.y -= dy;
+		rect.width += dx * 2;
+		rect.height += dy * 2;
+	}
+	//widen and check
+	inline void WidenRect(cv::Rect & rect, int dx, int dy, int w, int h)
+	{
+		WidenRect(rect, dx, dy);
+		CheckRect(rect, w, h);
+	}
+
 	CFaceTracker::CFaceTracker(void)
-		: m_pSrcMat(NULL)
+		: m_pImage(NULL)
+		, m_pMatDetection(NULL)
 		, m_bFaceLocated(false)
 		, m_dwLastTime(0)
 	{
-		//m_pMat = new cv::Mat();
 		m_pFaceCascade = new cv::CascadeClassifier();
 		if (!m_pFaceCascade->load(kFaceCascade))
 		{
@@ -51,21 +79,30 @@ namespace e
 			LOGE(_T("flandmark model init failed!"));
 			assert(0);
 		}
+
+		m_plfFlandmark = new double[2 * m_pFlandmarkModel->data.options.M];
+		assert(m_plfFlandmark);
 	}
 
 	CFaceTracker::~CFaceTracker(void)
 	{
-		if (m_pSrcMat)
+		if (m_pImage)
 		{
-			m_pSrcMat->data.ptr = 0;
-			cvReleaseMat(&m_pSrcMat);
-			m_pSrcMat = 0;
+			m_pImage->imageData = NULL;
+			delete m_pImage;
+			m_pImage = NULL;
 		}
 
 		if (m_pFaceCascade)
 		{
 			delete m_pFaceCascade;
 			m_pFaceCascade = 0;
+		}
+
+		if (m_plfFlandmark)
+		{
+			delete[] m_plfFlandmark;
+			m_plfFlandmark = NULL;
 		}
 
 		if (m_pFlandmarkModel)
@@ -75,38 +112,65 @@ namespace e
 		}
 	}
 
-	void CFaceTracker::SetupCvMat(void* pData, int nSize, int nWidth, int nHeight, int nBitCount)
+	void CFaceTracker::SetupMatrix(void* pData, int nSize, int nWidth, int nHeight, int nBitCount)
 	{
-		if (m_pSrcMat == nullptr)
+		assert(kScaleDefault <= 1.0f);
+
+		if (m_pImage == NULL)
 		{
-			m_pSrcMat = cvCreateMatHeader(nHeight, nWidth, CV_8UC4);
-			m_dstMat.create(cv::Size(nWidth*kDefaultScale, nHeight*kDefaultScale), CV_8UC4);
+			m_pImage = new IplImage();
+			memset(m_pImage, 0, sizeof(IplImage));
+			m_pImage->nSize = sizeof(IplImage);
+			m_pImage->depth = 8;
+			m_pImage->nChannels = nBitCount / 8;
+			m_pImage->width = nWidth;
+			m_pImage->height = nHeight;
+			m_pImage->imageSize = nSize;
+			m_pImage->imageData = (char*)pData;
+			m_pImage->widthStep = WidthBytes(nWidth*nBitCount);
+		}
+		
+		if (m_pMatDetection == NULL)
+		{
+			m_pMatDetection = new cv::Mat();
+			assert(m_pMatDetection);
 		}
 
-		m_pSrcMat->data.ptr = (byte*)pData;
-		m_pSrcMat->step = WidthBytes(nBitCount*nWidth);
-
-		cv::Mat srcMat = cvarrToMat(m_pSrcMat, false);
-		cv::resize(srcMat, m_dstMat, cv::Size(), kDefaultScale, kDefaultScale, CV_INTER_LINEAR);
+		assert(m_pImage->imageSize == nSize);
+		assert(m_pImage->width == nWidth && m_pImage->height == nHeight);
+		m_pImage->imageData =(char*)pData;
+		cv::resize(cvarrToMat(m_pImage), *m_pMatDetection, cv::Size(), kScaleDefault, kScaleDefault, CV_INTER_LINEAR);
 	}
 
-	void CFaceTracker::SetupCvMat(cv::Rect roi, void* pData, int nSize, int nWidth, int nHeight, int nBitCount)
+	void CFaceTracker::SetupMatrix(cv::Rect roi, void* pData, int nSize, int nWidth, int nHeight, int nBitCount)
 	{
-		if (m_pSrcMat == nullptr)
+		if (m_pImage == NULL)
 		{
-			m_pSrcMat = cvCreateMatHeader(nHeight, nWidth, CV_8UC4);
-			m_dstMat.create(cv::Size(nWidth*kDefaultScale, nHeight*kDefaultScale), CV_8UC4);
+			m_pImage = new IplImage();
+			m_pImage->depth = 8;
+			m_pImage->nChannels = nBitCount / 8;
+			m_pImage->width = nWidth;
+			m_pImage->height = nHeight;
+			m_pImage->imageSize = nSize;
+			m_pImage->imageData = (char*)pData;
+			m_pImage->widthStep = WidthBytes(nWidth*nBitCount);
 		}
 
-		m_pSrcMat->data.ptr = (byte*)pData;
-		m_pSrcMat->step = WidthBytes(nBitCount*nWidth);
+		if (m_pMatDetection == NULL)
+		{
+			m_pMatDetection = new cv::Mat();
+			assert(m_pMatDetection);
+		}
 
-		cv::Mat srcMat = cvarrToMat(m_pSrcMat, false);
-		cv::Mat roiMat = cv::Mat(srcMat, roi);
-		cv::resize(roiMat, m_dstMat, cv::Size(), kDefaultScale, kDefaultScale, CV_INTER_LINEAR);
+		assert(m_pImage->imageSize == nSize);
+		assert(m_pImage->width == nWidth && m_pImage->height == nHeight);
+		m_pImage->imageData = (char*)pData;
+
+		cv::Mat roiMat = cv::Mat(cvarrToMat(m_pImage), roi);
+		cv::resize(roiMat, *m_pMatDetection, cv::Size(), kScaleDefault, kScaleDefault, CV_INTER_LINEAR);
 	}
 
-	void CFaceTracker::DrawRect(cv::Rect rect, int nPenSize, int nColor, void* pData, int nSize, int nWidth, int nHeight, int nBitCount)
+	inline void CFaceTracker::DrawRect(cv::Rect rect, int nPenSize, int nColor, void* pData, int nSize, int nWidth, int nHeight, int nBitCount)
 	{
 		e::DrawRect(rect.x, rect.y, rect.width, rect.height, nPenSize, nColor, pData, nSize, nWidth, nHeight, nBitCount);
 	}
@@ -115,8 +179,7 @@ namespace e
 	{
 		for (size_t i = 0; i < points.size(); i++)
 		{
-			cv::Point & p = points[i];
-			e::DrawPoint(p.x, p.y, nPenSize, nColor, pData, nSize, nWidth, nHeight, nBitCount);
+			e::DrawPoint(points[i].x, points[i].y, nPenSize, nColor, pData, nSize, nWidth, nHeight, nBitCount);
 		}
 	}
 
@@ -127,23 +190,21 @@ namespace e
 		{
 			DWORD dwTime = GetTickCount();
 			if (m_dwLastTime != 0 && dwTime - m_dwLastTime < 500) return;
-
-			SetupCvMat(pData, nSize, nWidth, nHeight, nBitCount);
+			//adapter and resize 
+			SetupMatrix(pData, nSize, nWidth, nHeight, nBitCount);
 			std::vector<cv::Rect> faces;
-			m_pFaceCascade->detectMultiScale(m_dstMat, faces, 1.1, 2, kHaarFaceOptions, kDefaultMinFaceSize, kDefaultMaxFaceSize);
+			m_pFaceCascade->detectMultiScale(*m_pMatDetection, faces, kScaleFactorDefault, 2, kHaarOptions, kMinSizeDefault, kMaxSizeDefault);
 
-			const float fInvScale = 1.0f / kDefaultScale;
 			for (size_t i = 0; i < faces.size(); i++)
 			{
 				cv::Rect rect = faces[i];
-				rect.x *= fInvScale;
-				rect.y *= fInvScale;
-				rect.width *= fInvScale;
-				rect.height *= fInvScale;
-				m_faceRect = rect;
+				ResizeRect(rect, kInvScaleDefault);
 				m_prevRect = rect;
-				DrawRect(rect, 2, _RGB(255, 0, 0), pData, nSize, nWidth, nHeight, nBitCount);
+				m_faceRect = rect;
 				m_bFaceLocated = true;
+#if DRAW_FACERECT
+				DrawRect(rect, 2, E_RGB(255, 0, 0), pData, nSize, nWidth, nHeight, nBitCount);
+#endif
 			}
 
 			m_dwLastTime = dwTime;
@@ -153,40 +214,33 @@ namespace e
 		else//根据前一帧检测的数据，进行跟踪处理
 		{
 			int nRetryTimes = 0;
-			const float fScale = kDefaultScale;
-			const float fInvScale = 1.0f / fScale;
-			const float fdx = nWidth * 0.05f;
-			const float fdy = nHeight * 0.05f;
-			cv::Rect expendRect = m_faceRect;
+			const float fScale = kScaleDefault;
+			const float fInvScale = kInvScaleDefault;
+			const float dx = nWidth * kWidenDefault;
+			const float dy = nHeight * kWidenDefault;
+			cv::Rect searchRect = m_faceRect;
 _again:
-			expendRect.x -= fdx;
-			expendRect.y -= fdy;
-			expendRect.width += 2*fdx;
-			expendRect.height += 2*fdy;
-			limit(expendRect, nWidth, nHeight);
-			//display search erea
-			DrawRect(expendRect, 2, _RGB(0,0,255), pData, nSize, nWidth, nHeight, nBitCount);
-
-			SetupCvMat(expendRect, pData, nSize, nWidth, nHeight, nBitCount);
+			//expend the prev face rect to search
+			WidenRect(searchRect, round(dx), round(dy), nWidth, nHeight);
+#if DRAW_FACERECT
+			DrawRect(searchRect, 1, E_RGB(0,0,255), pData, nSize, nWidth, nHeight, nBitCount);
+#endif
+			SetupMatrix(searchRect, pData, nSize, nWidth, nHeight, nBitCount);
 			//setup face size
 			std::vector<cv::Rect> faces;
-			cv::Size faceSize(m_faceRect.width*fScale, m_faceRect.height*fScale);
-			cv::Size sizeOffset(faceSize.width*0.25f, faceSize.height*0.25f);
-			cv::Size minFaceSize = faceSize - sizeOffset;
-			cv::Size maxFaceSize = faceSize + sizeOffset;
-			m_pFaceCascade->detectMultiScale(m_dstMat, faces, 1.1, 2, kHaarFaceOptions, minFaceSize, maxFaceSize);
+			cv::Size faceSize(round(m_faceRect.width*fScale), round(m_faceRect.height*fScale));
+			cv::Size offset(round(faceSize.width*0.25f), round(faceSize.height*0.25f));
+			//range of feature size
+			m_pFaceCascade->detectMultiScale(*m_pMatDetection, faces, kScaleFactorDefault, 2, kHaarOptions, faceSize-offset, faceSize+offset);
 
 			m_bFaceLocated = false;
 			for (size_t i = 0; i < faces.size(); i++)
 			{
 				cv::Rect rect = faces[i];
-				rect.x *= fInvScale;
-				rect.y *= fInvScale;
-				rect.width *= fInvScale;
-				rect.height *= fInvScale;
-				rect.x += expendRect.x;
-				rect.y += expendRect.y;
-				limit(rect, nWidth, nHeight);
+				ResizeRect(rect, fInvScale);
+				rect.x += searchRect.x;
+				rect.y += searchRect.y;
+				CheckRect(rect, nWidth, nHeight);
 				
 				if (m_faceRect.contains(rect.tl()) && m_faceRect.contains(rect.br()))
 				{
@@ -197,52 +251,47 @@ _again:
 					m_faceRect = rect;
 				}
 
-				int dx = abs(rect.x - m_faceRect.x);
-				int dy = abs(rect.y - m_faceRect.y);
-				if (dx >= 5 || dy >= 5)
+				if (abs(rect.x - m_faceRect.x) >= 5 || abs(rect.y - m_faceRect.y) >= 5)
 				{
 					m_faceRect = rect;
 				}
 				m_prevRect = rect;
 				m_bFaceLocated = true;
-
-				DrawRect(m_faceRect, 2, _RGB(0,255,0), pData, nSize, nWidth, nHeight, nBitCount);
-
-//眼睛、鼻子、嘴巴定位处理
-				cv::Mat gray;
-				cv::Mat faceMat = cv::Mat(cvarrToMat(m_pSrcMat), expendRect);
-				cv::cvtColor(faceMat, gray, CV_RGB2GRAY);
-				cv::resize(gray, gray, cv::Size(), fScale, fScale, CV_INTER_LINEAR);
-				cv::imwrite("f:\\temp\\gray.bmp", gray);
+#if DRAW_FACERECT
+				DrawRect(m_faceRect, 2, E_RGB(0,255,0), pData, nSize, nWidth, nHeight, nBitCount);
+#endif
+				//眼睛、鼻子、嘴巴定位处理
+				cv::Mat grayMat;
+				cv::Mat faceMat = cv::Mat(cvarrToMat(m_pImage), searchRect);
+				cv::cvtColor(faceMat, grayMat, CV_RGB2GRAY);
+				const float fMarkScale = kScaleDefault;//45.0f / m_prevRect.width;
+				const float fInvMarkScale = 1.0f / fMarkScale;
+				cv::resize(grayMat, grayMat, cv::Size(), fScale, fMarkScale, CV_INTER_LINEAR);
 
 				rect = m_prevRect;
-				rect.x -= expendRect.x;
-				rect.y -= expendRect.y;
-				rect.x *= fScale;
-				rect.y *= fScale;
-				rect.width *= fScale;
-				rect.height *= fScale;
-
+				rect.x -= searchRect.x;
+				rect.y -= searchRect.y;
+				ResizeRect(rect, fMarkScale);
 				int bbox[4] = { rect.x, rect.y, rect.x+rect.width, rect.y+rect.height };
-				LOGD(_T("flandmark: %d,%d,%d,%d"), bbox[0], bbox[1], bbox[2], bbox[3]);
+				int margin[2] = { 10, 10 };
+				double *landmarks = m_plfFlandmark;
 
-				double *landmarks = (double*)malloc(2 * m_pFlandmarkModel->data.options.M * sizeof(double));
-				IplImage* input = &IplImage(gray);
-				flandmark_detect(input, bbox, m_pFlandmarkModel, landmarks);
-	
-				cvCircle(m_pSrcMat
-					, cvPoint(int(landmarks[0]* fInvScale + expendRect.x), int(landmarks[1]* fInvScale + expendRect.y))
-					, 3, CV_RGB(0, 0, 255)
-					, CV_FILLED);
-
-				for (int i = 2; i < 2 * m_pFlandmarkModel->data.options.M; i += 2)
+				if (!flandmark_detect(&IplImage(grayMat), bbox, m_pFlandmarkModel, landmarks, margin))
 				{
-					cvCircle(m_pSrcMat
-						, cvPoint(int(landmarks[i]* fInvScale + expendRect.x), int(landmarks[i + 1]* fInvScale + expendRect.y))
-						, 3, CV_RGB(255, 0, 0)
-						, CV_FILLED);
+// 					cvCircle(m_pSrcMat
+// 						, cvPoint(int(landmarks[0] * fInvMarkScale + searchRect.x), int(landmarks[1] * fInvMarkScale + searchRect.y))
+// 						, 3, CV_RGB(0, 0, 255)
+// 						, CV_FILLED);
+
+					for (int i = 2; i < 2 * m_pFlandmarkModel->data.options.M; i += 2)
+					{
+						cvCircle(m_pImage
+							, cvPoint(int(landmarks[i] * fInvMarkScale + searchRect.x), int(landmarks[i + 1] * fInvMarkScale + searchRect.y))
+							, 3, CV_RGB(255, 0, 0)
+							, CV_FILLED);
+					}
+					LOGD(_T("flandmark box : %d,%d,%d,%d"), bbox[0], bbox[1], bbox[2]-bbox[0], bbox[3]-bbox[1]);
 				}
-				free(landmarks);		
 			}// end for each face
 
 			//跟踪失败，再次检测或结束
@@ -250,9 +299,12 @@ _again:
 			{
 				static int nFailedTimes = 0;
 				LOGD(_T("face track failed: %d"), nFailedTimes++);
-				cv::imwrite("f:\\temp\\loss.bmp", m_dstMat);
+				cv::imwrite("f:\\temp\\loss.bmp", *m_pMatDetection);
 				if (++nRetryTimes < kMaxRetryTimes) goto _again;           
-			}
+#if DRAW_FACERECT
+				DrawRect(m_prevRect, 2, E_RGB(0, 255, 252), pData, nSize, nWidth, nHeight, nBitCount);
+#endif
+			}          
 		}
 	}
 }

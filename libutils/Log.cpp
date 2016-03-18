@@ -136,7 +136,7 @@ namespace e
 	{
 		va_list ap;
 		va_start(ap, pFormat);
-		int nSize = _vsctprintf(pFormat, ap) + sizeof(TCHAR) * 256;
+		int nSize = _vsctprintf(pFormat, ap) + sizeof(TCHAR) * 32;
 		TCHAR* pBuffer = new TCHAR[nSize];
 		memset(pBuffer, 0, nSize);
 		_vstprintf_s(pBuffer, nSize, pFormat, ap);

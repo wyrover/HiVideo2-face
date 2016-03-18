@@ -24,6 +24,7 @@ namespace e
 		CRITICAL_SECTION m_csLock;
 	};
 
+	//only debug log with windows OS
 	void Log(const TCHAR* pFormat, ...);
 	void Log(const TCHAR* pPrefix, const TCHAR* pFormat, ...);
 

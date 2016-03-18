@@ -36,13 +36,10 @@
     <ClInclude Include="Region.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="flandmark_detector.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="liblbp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="msvc-compat.h">
+    <ClInclude Include="flandmark.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -59,10 +56,10 @@
     <ClCompile Include="Region.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="flandmark_detector.cpp">
+    <ClCompile Include="liblbp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="liblbp.cpp">
+    <ClCompile Include="flandmark.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

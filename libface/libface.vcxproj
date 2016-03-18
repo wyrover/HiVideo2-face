@@ -151,18 +151,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FaceTracker.h" />
-    <ClInclude Include="flandmark_detector.h" />
+    <ClInclude Include="flandmark.h" />
     <ClInclude Include="libface.h" />
     <ClInclude Include="liblbp.h" />
     <ClInclude Include="misc.h" />
-    <ClInclude Include="msvc-compat.h" />
     <ClInclude Include="Region.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FaceTracker.cpp" />
-    <ClCompile Include="flandmark_detector.cpp" />
+    <ClCompile Include="flandmark.cpp" />
     <ClCompile Include="liblbp.cpp" />
     <ClCompile Include="misc.cpp" />
     <ClCompile Include="Region.cpp" />
