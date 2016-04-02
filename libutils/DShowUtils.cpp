@@ -26,7 +26,7 @@ namespace e
 
 		IEnumMoniker* pEnumMoniker = 0;
 		hr = pCreateDevEnum->CreateClassEnumerator(CLSID_DeviceCategory, &pEnumMoniker, 0);
-		if (FAILED(hr))
+		if (hr != S_OK)
 		{
 			pCreateDevEnum->Release();
 			return hr;

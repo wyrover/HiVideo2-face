@@ -47,7 +47,7 @@ namespace e
 
     inline void WidenRect(cv::Rect & rect, int dx, int dy)
     {
-        rect.x -= dx; 
+        rect.x -= dx;
         rect.y -= dy;
         rect.width += dx * 2;
         rect.height += dy * 2;
@@ -81,7 +81,10 @@ namespace e
         }
 
         m_plfFlandmark = new double[2 * m_pFlandmarkModel->data.options.M];
-        assert(m_plfFlandmark);
+		if (!m_plfFlandmark)
+		{
+			assert(0);
+		}
     }
 
     CFaceTracker::~CFaceTracker(void)
